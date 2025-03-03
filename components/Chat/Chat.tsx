@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/lib/store/user";
 
 interface Message {
   id: number;
@@ -14,7 +14,7 @@ interface Message {
 }
 
 export default function ChatRoom() {
-  const { data: session } = useSession();
+  const { user } = useUserStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
@@ -50,6 +50,7 @@ export default function ChatRoom() {
       .order("created_at", { ascending: true });
 
     if (data) setMessages(data);
+    if (error) console.error(error);
   };
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -59,8 +60,8 @@ export default function ChatRoom() {
     const { error } = await supabase.from("messages").insert([
       {
         content: newMessage,
-        user_id: session?.user?.id || "anonymous",
-        user_email: session?.user?.email || "游客",
+        user_id: user?.id || "anonymous",
+        user_email: user?.email || "游客",
       },
     ]);
 
@@ -76,9 +77,7 @@ export default function ChatRoom() {
           <div
             key={message.id}
             className={`p-3 rounded-lg shadow ${
-              message.user_id === session?.user?.id
-                ? "bg-blue-100 ml-auto"
-                : "bg-white"
+              message.user_id === user?.id ? "bg-blue-100 ml-auto" : "bg-white"
             }`}
           >
             <p>{message.content}</p>
