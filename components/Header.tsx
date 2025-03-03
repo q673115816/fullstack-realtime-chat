@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const Header = () => {
   return (
-    <div className={cn("bg-white flex justify-between items-center px-4 py-2")}>
+    <div className={cn("border-b bg-white flex justify-between items-center px-4 py-2")}>
       <h1>Random Chat</h1>
       <Button>登录</Button>
       {/* <div className="flex justify-between items-center mb-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/lib/store/user";
 
@@ -14,40 +14,39 @@ interface Message {
 }
 
 export default function ChatRoom() {
+  const supabase = createClient();
   const { user } = useUserStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
     // 移除 session 检查，让所有用户都能接收消息
-    const channel = supabase
-      .channel("messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
-        }
-      )
-      .subscribe();
+    // const channel = supabase
+    //   .channel("messages")
+    //   .on(
+    //     "postgres_changes",
+    //     {
+    //       event: "INSERT",
+    //       schema: "public",
+    //       table: "messages",
+    //     },
+    //     (payload) => {
+    //       setMessages((prev) => [...prev, payload.new as Message]);
+    //     }
+    //   )
+    //   .subscribe();
 
     // 获取历史消息
     fetchMessages();
 
     return () => {
-      supabase.removeChannel(channel);
+      // supabase.removeChannel(channel);
     };
   }, []); // 移除 session 依赖
 
   const fetchMessages = async () => {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .order("created_at", { ascending: true });
+    const { data, error } = await supabase.from("messages").select("*");
+    // .order("created_at", { ascending: true });
 
     if (data) setMessages(data);
     if (error) console.error(error);
