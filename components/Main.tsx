@@ -1,5 +1,5 @@
 const Main = ({ children }: { children: React.ReactNode }) => {
-  return <div className="flex-1">{children}</div>;
+  return <div className="flex-auto h-0">{children}</div>;
 };
 
 export default Main;

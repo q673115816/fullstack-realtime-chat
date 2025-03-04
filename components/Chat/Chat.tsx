@@ -19,6 +19,14 @@ export default function ChatRoom() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
+  const fetchMessages = async () => {
+    const { data, error } = await supabase.from("messages").select("*");
+    // .order("created_at", { ascending: true });
+
+    if (data) setMessages(data);
+    if (error) console.error(error);
+  };
+
   useEffect(() => {
     // 移除 session 检查，让所有用户都能接收消息
     // const channel = supabase
@@ -42,30 +50,26 @@ export default function ChatRoom() {
     return () => {
       // supabase.removeChannel(channel);
     };
-  }, []); // 移除 session 依赖
-
-  const fetchMessages = async () => {
-    const { data, error } = await supabase.from("messages").select("*");
-    // .order("created_at", { ascending: true });
-
-    if (data) setMessages(data);
-    if (error) console.error(error);
-  };
+  }, [fetchMessages]); // 移除 session 依赖
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const { error } = await supabase.from("messages").insert([
-      {
-        content: newMessage,
-        user_id: user?.id || "anonymous",
-        user_email: user?.email || "游客",
-      },
-    ]);
+    const value = {
+      content: newMessage,
+      user_id: user?.id,
+      user_email: user?.email || "游客",
+    };
+
+    const { data, error } = await supabase
+      .from("messages")
+      .insert([value])
+      .select();
 
     if (!error) {
       setNewMessage("");
+      setMessages((prev) => [...prev, ...data]);
     }
   };
 
