@@ -1,7 +1,7 @@
 // import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Avatar from "./Avatar";
-import { createClient } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import Login from "./Login";
 // import { useSession, signIn, signOut } from "next-auth/react";
 

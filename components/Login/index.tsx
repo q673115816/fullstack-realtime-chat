@@ -5,56 +5,64 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-// import { createClient } from "@/lib/supabase";
-// import { Label } from "@/components/ui/label";
-// import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { signInAction, signUpAction } from "@/actions";
 const Login = () => {
-  // const supabase = createClient();
-  //   const handleLogin = async (formData: FormData) => {
-  //     const email = formData.get("email")?.toString();
-  //     const password = formData.get("password")?.toString();
-  //     if (!email || !password) {
-  //       console.error("Email and password are required");
-  //       return;
-  //     }
-  //     const { data, error } = await supabase.auth.signUp({
-  //       email,
-  //       password,
-  //     });
-  //     if (error) {
-  //       console.error("Error signing up:", error);
-  //     } else {
-  //       console.log("Sign up successful:", data);
-  //     }
-  //   };
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button>登录</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>登录</DialogTitle>
-          <DialogDescription>
-            {/* <form className="flex flex-col min-w-64 max-w-64 mx-auto">
-              <Label htmlFor="email">Email</Label>
-              <Input name="email" placeholder="you@example.com" required />
-              <Label htmlFor="password">Password</Label>
+      <DialogContent className="sm:max-w-[425px]">
+        <form>
+          <DialogHeader>
+            <DialogTitle>Edit profile</DialogTitle>
+            <DialogDescription>
+              Make changes to your profile here. Click save when you&apos;re
+              done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                Email
+              </Label>
               <Input
-                type="password"
-                name="password"
-                placeholder="Your password"
-                minLength={6}
+                id="email"
+                type="email"
+                name="email"
+                className="col-span-3"
                 required
               />
-              <Button formAction={handleLogin}>Sign up</Button>
-            </form> */}
-          </DialogDescription>
-        </DialogHeader>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="password" className="text-right">
+                Password
+              </Label>
+              <Input
+                type="password"
+                id="password"
+                name="password"
+                className="col-span-3"
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter className="">
+            <Button type="submit" formAction={signInAction}>
+              Sign In
+            </Button>
+            <Button type="submit" variant={"outline"} formAction={signUpAction}>
+              Sign Up
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase";
+import { useState } from "react";
+import { useMount } from "react-use";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useUserStore } from "@/lib/store/user";
+import { useUserStore } from "@/store/user";
 
 interface Message {
   id: number;
@@ -27,7 +28,7 @@ export default function ChatRoom() {
     if (error) console.error(error);
   };
 
-  useEffect(() => {
+  useMount(() => {
     // 移除 session 检查，让所有用户都能接收消息
     // const channel = supabase
     //   .channel("messages")
@@ -50,7 +51,7 @@ export default function ChatRoom() {
     return () => {
       // supabase.removeChannel(channel);
     };
-  }, [fetchMessages]); // 移除 session 依赖
+  }); // 移除 session 依赖
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
