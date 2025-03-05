@@ -7,10 +7,11 @@ import Login from "../Login";
 
 const Header = async () => {
   const supabase = await createClient();
+  // const { data } = await supabase.auth.getSession();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  console.log(user);
+  // console.log(user, data);
   return (
     <div
       className={cn(

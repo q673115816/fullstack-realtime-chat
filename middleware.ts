@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   }
 
   // 将所有其他路径重定向到首页
-  return NextResponse.redirect(new URL('/', request.url))
+  // return NextResponse.redirect(new URL('/', request.url))
 }
 
 // 配置需要运行中间件的路径

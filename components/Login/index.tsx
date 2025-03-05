@@ -5,77 +5,101 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { signInAction, signUpAction } from "@/actions";
 import { useState } from "react";
+import { SocialLayout, ThemeSupa, ViewType } from "@supabase/auth-ui-shared";
+import { Auth } from "@supabase/auth-ui-react";
+import { createClient } from "@/lib/supabase/client";
+// import styles from "./style.module.css";
+
+// const classes: { [key: string]: string } = {
+//   "rgb(202, 37, 37)": styles["container-redshadow"],
+//   "rgb(65, 163, 35)": styles["container-greenshadow"],
+//   "rgb(8, 107, 177)": styles["container-blueshadow"],
+//   "rgb(235, 115, 29)": styles["container-orangeshadow"],
+// };
+
+const colors = [
+  "rgb(202, 37, 37)",
+  "rgb(65, 163, 35)",
+  "rgb(8, 107, 177)",
+  "rgb(235, 115, 29)",
+] as const;
+
+const socialAlignments = ["horizontal", "vertical"] as const;
+
+const radii = ["5px", "10px", "20px"] as const;
+
+const views: { id: ViewType; title: string }[] = [
+  { id: "sign_in", title: "Sign In" },
+  { id: "sign_up", title: "Sign Up" },
+  { id: "magic_link", title: "Magic Link" },
+  { id: "forgotten_password", title: "Forgotten Password" },
+  { id: "update_password", title: "Update Password" },
+  { id: "verify_otp", title: "Verify Otp" },
+];
+
 const Login = () => {
+  const supabase = createClient();
   const [open, setOpen] = useState(false);
-  const handleSignIn = () => {
-    handleClose();
-    window.location.reload();
-  };
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const [brandColor] = useState(colors[0] as string);
+  const [borderRadius] = useState(radii[0] as string);
+  const [theme] = useState("dark");
+  const [socialLayout] = useState<SocialLayout>(
+    socialAlignments[1] satisfies SocialLayout
+  );
+  const [view] = useState(views[0]);
+  // const handleSignIn = () => {
+  //   handleClose();
+  //   window.location.reload();
+  // };
+  // const handleClose = () => {
+  //   setOpen(false);
+  // };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>登录</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <form>
-          <DialogHeader>
-            <DialogTitle>Edit profile</DialogTitle>
-            <DialogDescription>
-              Make changes to your profile here. Click save when you&apos;re
-              done.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 py-4">
-            <div className="space-y-1">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                name="email"
-                className="col-span-3"
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="password" className="text-right">
-                Password
-              </Label>
-              <Input
-                type="password"
-                id="password"
-                name="password"
-                className="col-span-3"
-                required
-              />
-            </div>
-          </div>
-          <DialogFooter className="">
-            <Button type="submit" formAction={signInAction(handleSignIn)}>
-              Sign In
-            </Button>
-            <Button
-              type="submit"
-              variant={"outline"}
-              formAction={signUpAction(handleClose)}
-            >
-              Sign Up
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogHeader>
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here. Click save when you&apos;re done.
+          </DialogDescription>
+        </DialogHeader>
+        <Auth
+          supabaseClient={supabase}
+          view={view.id}
+          appearance={{
+            theme: ThemeSupa,
+            style: {
+              button: {
+                borderRadius: borderRadius,
+                borderColor: "rgba(0,0,0,0)",
+              },
+            },
+            variables: {
+              default: {
+                colors: {
+                  brand: brandColor,
+                  brandAccent: `gray`,
+                },
+              },
+            },
+          }}
+          providers={[
+            // "apple",
+            "google",
+            "github",
+          ]}
+          socialLayout={socialLayout}
+          theme={theme}
+          redirectTo={`${location.origin}/auth/callback`}
+        />
       </DialogContent>
     </Dialog>
   );

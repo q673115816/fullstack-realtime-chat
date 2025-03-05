@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { Provider } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
 export const signUpAction = (callback: () => void) => async (formData: FormData) => {
@@ -57,5 +58,21 @@ export const signOutAction = (callback?: () => void) => async () => {
         console.log("Sign out successful");
         toast.success("退出成功");
         callback?.();
+    }
+};
+
+export const signInWithOAuthAction = async ({ provider, callback }: { provider: Provider, callback: () => void }) => {
+    const supabase = createClient();
+    const { error, data } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+            // redirectTo: `${window.location.origin}/auth/callback`,
+        },
+    });
+    if (error) {
+        console.error("Error signing in with OAuth:", error);
+    } else {
+        console.log("Sign in with OAuth successful:", data);
+        // callback?.();
     }
 };
