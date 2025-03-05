@@ -13,9 +13,18 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { signInAction, signUpAction } from "@/actions";
+import { useState } from "react";
 const Login = () => {
+  const [open, setOpen] = useState(false);
+  const handleSignIn = () => {
+    handleClose();
+    window.location.reload();
+  };
+  const handleClose = () => {
+    setOpen(false);
+  };
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>登录</Button>
       </DialogTrigger>
@@ -28,8 +37,8 @@ const Login = () => {
               done.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
+          <div className="space-y-2 py-4">
+            <div className="space-y-1">
               <Label htmlFor="email" className="text-right">
                 Email
               </Label>
@@ -41,7 +50,7 @@ const Login = () => {
                 required
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div className="space-y-1">
               <Label htmlFor="password" className="text-right">
                 Password
               </Label>
@@ -55,10 +64,14 @@ const Login = () => {
             </div>
           </div>
           <DialogFooter className="">
-            <Button type="submit" formAction={signInAction}>
+            <Button type="submit" formAction={signInAction(handleSignIn)}>
               Sign In
             </Button>
-            <Button type="submit" variant={"outline"} formAction={signUpAction}>
+            <Button
+              type="submit"
+              variant={"outline"}
+              formAction={signUpAction(handleClose)}
+            >
               Sign Up
             </Button>
           </DialogFooter>

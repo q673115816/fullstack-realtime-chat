@@ -1,15 +1,16 @@
 // import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Avatar from "./Avatar";
-import { createClient } from "@/lib/supabase/client";
-import Login from "./Login";
+import Account from "./Account";
+import { createClient } from "@/lib/supabase/server";
+import Login from "../Login";
 // import { useSession, signIn, signOut } from "next-auth/react";
 
 const Header = async () => {
-  const supabase = createClient();
-  const { data } = await supabase.auth.getSession();
-  const session = data.session;
-  console.log(session);
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  console.log(user);
   return (
     <div
       className={cn(
@@ -17,7 +18,7 @@ const Header = async () => {
       )}
     >
       <h1>Random Chat</h1>
-      {session ? <Avatar session={session} /> : <Login />}
+      {user ? <Account user={user} /> : <Login />}
       {/* <div className="flex justify-between items-center mb-4">
         <span>{session ? `欢迎, ${session.user.email}` : "游客模式"}</span>
         {session ? (

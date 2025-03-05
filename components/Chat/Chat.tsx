@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMount } from "react-use";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
 import { useUserStore } from "@/store/user";
+import { toast } from "sonner";
+import { sleep } from "@/lib/utils";
+import clsx from "clsx";
+import { Input } from "@/components/ui/input";
 
 interface Message {
   id: number;
@@ -15,6 +20,7 @@ interface Message {
 }
 
 export default function ChatRoom() {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
   const { user } = useUserStore();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -28,7 +34,13 @@ export default function ChatRoom() {
     if (error) console.error(error);
   };
 
-  useMount(() => {
+  const handleScrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  };
+
+  useMount(async () => {
     // 移除 session 检查，让所有用户都能接收消息
     // const channel = supabase
     //   .channel("messages")
@@ -46,8 +58,10 @@ export default function ChatRoom() {
     //   .subscribe();
 
     // 获取历史消息
-    fetchMessages();
+    await fetchMessages();
+    await sleep(0);
 
+    handleScrollToBottom();
     return () => {
       // supabase.removeChannel(channel);
     };
@@ -71,38 +85,42 @@ export default function ChatRoom() {
     if (!error) {
       setNewMessage("");
       setMessages((prev) => [...prev, ...data]);
+      toast.success("消息发送成功");
+      await sleep(0);
+      handleScrollToBottom();
     }
   };
 
   return (
     <div className="bg-white h-full flex flex-col max-w-md mx-auto p-4">
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+      <div className="flex-1 overflow-y-auto space-y-4 mb-4" ref={scrollRef}>
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`p-3 rounded-lg shadow ${
+            className={clsx(
+              "p-2 rounded border max-w-[80%]",
               message.user_id === user?.id ? "bg-blue-100 ml-auto" : "bg-white"
-            }`}
+            )}
           >
-            <p>{message.content}</p>
             <small className="text-gray-500">
               {message.user_email} -{" "}
               {new Date(message.created_at).toLocaleString()}
             </small>
+            <p className="break-all">{message.content}</p>
           </div>
         ))}
       </div>
 
       <form onSubmit={sendMessage} className="flex gap-2">
-        <input
+        <Input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          className="flex-1 rounded-lg border p-2"
           placeholder="输入消息..."
         />
         <Button type="submit">发送</Button>
       </form>
+      <Toaster />
     </div>
   );
 }
