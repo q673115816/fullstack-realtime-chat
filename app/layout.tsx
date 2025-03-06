@@ -6,6 +6,7 @@ import Header from "../components/Header";
 import { cn } from "@/lib/utils";
 import Footer from "../components/Footer";
 import Main from "../components/Main";
+import InitClient from "@/components/InitClient";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,16 +21,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh">
-      <body
-        className={cn("bg-emerald-50 flex flex-col h-screen", inter.className)}
-      >
-        <AuthProvider>
-          <Header />
-          <Main>{children}</Main>
-          <Footer />
-        </AuthProvider>
-      </body>
-    </html>
+    <>
+      <InitClient />
+      <html lang="zh">
+        <body
+          className={cn(
+            "bg-emerald-50 flex flex-col h-screen",
+            inter.className
+          )}
+        >
+          <AuthProvider>
+            <Header />
+            <Main>{children}</Main>
+            <Footer />
+          </AuthProvider>
+        </body>
+      </html>
+    </>
   );
 }

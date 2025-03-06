@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useMount } from "react-use";
+import { RefObject, useEffect, useRef, useState } from "react";
+import { useIntersection, useMount } from "react-use";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { sleep } from "@/lib/utils";
 import clsx from "clsx";
 import { Input } from "@/components/ui/input";
+import { ArrowBigDownDash } from "lucide-react";
 
 interface Message {
   id: number;
@@ -17,12 +18,22 @@ interface Message {
   user_id: string;
   user_email: string;
   created_at: string;
+  fingerprint?: string;
 }
 
 export default function ChatRoom() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const intersectionRef = useRef<HTMLDivElement>(null);
+  const intersection = useIntersection(
+    intersectionRef as RefObject<HTMLElement>,
+    {
+      root: scrollRef.current,
+      rootMargin: "0px",
+      threshold: 1,
+    }
+  );
   const supabase = createClient();
-  const { user } = useUserStore();
+  const { user, fingerprint } = useUserStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
@@ -41,31 +52,47 @@ export default function ChatRoom() {
   };
 
   useMount(async () => {
-    // 移除 session 检查，让所有用户都能接收消息
-    // const channel = supabase
-    //   .channel("messages")
-    //   .on(
-    //     "postgres_changes",
-    //     {
-    //       event: "INSERT",
-    //       schema: "public",
-    //       table: "messages",
-    //     },
-    //     (payload) => {
-    //       setMessages((prev) => [...prev, payload.new as Message]);
-    //     }
-    //   )
-    //   .subscribe();
+    // 设置实时订阅
+    const channel = supabase
+      .channel("messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "*", // 监听所有事件（INSERT, UPDATE, DELETE）
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          // 根据不同的事件类型处理消息
+          switch (payload.eventType) {
+            case "INSERT":
+              setMessages((prev) => [...prev, payload.new as Message]);
+              break;
+            case "DELETE":
+              setMessages((prev) =>
+                prev.filter((msg) => msg.id !== payload.old.id)
+              );
+              break;
+            case "UPDATE":
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === payload.new.id ? (payload.new as Message) : msg
+                )
+              );
+              break;
+          }
+        }
+      )
+      .subscribe();
 
     // 获取历史消息
     await fetchMessages();
-    await sleep(0);
 
-    handleScrollToBottom();
+    // 清理函数
     return () => {
-      // supabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
-  }); // 移除 session 依赖
+  });
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,42 +100,66 @@ export default function ChatRoom() {
 
     const value = {
       content: newMessage,
+      fingerprint,
       user_id: user?.id,
       user_email: user?.email || "游客",
     };
 
-    const { data, error } = await supabase
-      .from("messages")
-      .insert([value])
-      .select();
+    const { error } = await supabase.from("messages").insert([value]);
 
     if (!error) {
       setNewMessage("");
-      setMessages((prev) => [...prev, ...data]);
       toast.success("消息发送成功");
-      await sleep(0);
-      handleScrollToBottom();
     }
+  };
+
+  useEffect(() => {
+    (async () => {
+      if (intersection?.isIntersecting || isSelf(messages.at(-1) as Message)) {
+        await sleep(0);
+        handleScrollToBottom();
+      }
+    })();
+  }, [messages]);
+
+  const isSelf = (message: Message) => {
+    return (
+      message?.user_id === user?.id || message?.fingerprint === fingerprint
+    );
   };
 
   return (
     <div className="bg-white h-full flex flex-col max-w-md mx-auto p-4">
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4" ref={scrollRef}>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={clsx(
-              "p-2 rounded border max-w-[80%]",
-              message.user_id === user?.id ? "bg-blue-100 ml-auto" : "bg-white"
-            )}
-          >
-            <small className="text-gray-500">
-              {message.user_email} -{" "}
-              {new Date(message.created_at).toLocaleString()}
-            </small>
-            <p className="break-all">{message.content}</p>
-          </div>
-        ))}
+      <div className="flex-1 relative mb-4 h-0">
+        <div className="h-full overflow-y-auto space-y-4" ref={scrollRef}>
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={clsx(
+                "p-2 rounded border max-w-[80%]",
+                isSelf(message) ? "bg-blue-100 ml-auto" : "bg-white"
+              )}
+            >
+              <small className="text-gray-500">
+                {message.user_email} -{" "}
+                {new Date(message.created_at).toLocaleString()}
+              </small>
+              <p className="break-all">{message.content}</p>
+            </div>
+          ))}
+          <div ref={intersectionRef} className="h-px w-px"></div>
+        </div>
+        <Button
+          className={clsx(
+            "absolute bottom-4 right-8 cursor-pointer",
+            intersection?.isIntersecting ? "hidden" : ""
+          )}
+          variant="outline"
+          size="icon"
+          onClick={handleScrollToBottom}
+        >
+          <ArrowBigDownDash />
+        </Button>
       </div>
 
       <form onSubmit={sendMessage} className="flex gap-2">
