@@ -85,7 +85,7 @@ const Login = () => {
             "github",
           ]}
           socialLayout={socialLayout}
-          redirectTo={`${location.origin}/auth/callback`}
+          redirectTo={`${window.location.origin}/auth/callback`}
         />
       </DialogContent>
     </Dialog>

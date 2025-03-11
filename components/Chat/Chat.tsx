@@ -10,7 +10,10 @@ import { toast } from "sonner";
 import { sleep } from "@/lib/utils";
 import clsx from "clsx";
 import { Input } from "@/components/ui/input";
-import { ArrowBigDownDash } from "lucide-react";
+import { ArrowBigDownDash, House } from "lucide-react";
+import Avatar from "@/components/Avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import * as motion from "motion/react-client";
 
 interface Message {
   id: number;
@@ -36,6 +39,7 @@ export default function ChatRoom() {
   const { user, fingerprint } = useUserStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [selectedUser, setSelectedUser] = useState<number>(-1);
 
   const fetchMessages = async () => {
     const { data, error } = await supabase.from("messages").select("*");
@@ -129,40 +133,77 @@ export default function ChatRoom() {
   };
 
   return (
-    <div className="bg-white h-full flex flex-col max-w-md mx-auto p-4">
-      <div className="flex-1 relative mb-4 h-0">
-        <div className="h-full overflow-y-auto space-y-4" ref={scrollRef}>
-          {messages.map((message) => (
+    <div className="bg-white h-full flex flex-col max-w-lg mx-auto gap-4">
+      <div className="flex-1 relative h-0">
+        <div className="flex gap-2 h-full divide-x">
+          <ScrollArea className="w-16 h-full">
             <div
-              key={message.id}
               className={clsx(
-                "p-2 rounded border max-w-[80%]",
-                isSelf(message) ? "bg-blue-100 ml-auto" : "bg-white"
+                "w-16 h-16 flex items-center justify-center cursor-pointer",
+                {
+                  "bg-gray-300": selectedUser === -1,
+                }
               )}
+              onClick={() => setSelectedUser(-1)}
             >
-              <small className="text-gray-500">
-                {message.user_email} -{" "}
-                {new Date(message.created_at).toLocaleString()}
-              </small>
-              <p className="break-all">{message.content}</p>
+              <House />
             </div>
-          ))}
-          <div ref={intersectionRef} className="h-px w-px"></div>
+            {Array.from({ length: 20 }).map((_, index) => (
+              <div
+                key={index}
+                className={clsx(
+                  "w-16 h-16 flex items-center justify-center cursor-pointer",
+                  index === selectedUser && "bg-gray-300"
+                )}
+                onClick={() => setSelectedUser(index)}
+              >
+                <Avatar src={`https://github.com/shadcn.png`} />
+              </div>
+            ))}
+          </ScrollArea>
+          <div className="h-full overflow-y-auto space-y-4 p-4" ref={scrollRef}>
+            {messages.map((message) => (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{
+                  duration: 0.8,
+                  delay: 0.5,
+                  ease: [0, 0.71, 0.2, 1.01],
+                }}
+                key={message.id}
+              >
+                <div
+                  className={clsx(
+                    "p-2 rounded border max-w-[70%]",
+                    isSelf(message) ? "bg-blue-100 ml-auto" : "bg-white"
+                  )}
+                >
+                  <small className="text-gray-500">
+                    {message.user_email} -{" "}
+                    {new Date(message.created_at).toLocaleString()}
+                  </small>
+                  <p className="break-all">{message.content}</p>
+                </div>
+              </motion.div>
+            ))}
+            <div ref={intersectionRef} className="h-px w-px"></div>
+          </div>
+          <Button
+            className={clsx(
+              "absolute bottom-4 right-8 cursor-pointer",
+              intersection?.isIntersecting ? "hidden" : ""
+            )}
+            variant="outline"
+            size="icon"
+            onClick={handleScrollToBottom}
+          >
+            <ArrowBigDownDash />
+          </Button>
         </div>
-        <Button
-          className={clsx(
-            "absolute bottom-4 right-8 cursor-pointer",
-            intersection?.isIntersecting ? "hidden" : ""
-          )}
-          variant="outline"
-          size="icon"
-          onClick={handleScrollToBottom}
-        >
-          <ArrowBigDownDash />
-        </Button>
       </div>
 
-      <form onSubmit={sendMessage} className="flex gap-2">
+      <form onSubmit={sendMessage} className="flex gap-2 mx-4">
         <Input
           type="text"
           value={newMessage}
